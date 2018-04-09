@@ -389,7 +389,6 @@ __global__ void patchmatch_argmax_kernel(
 	int id1 = blockIdx.x * blockDim.x + threadIdx.x;
 	int size1 = h1 * w1, size2 = h2 * w2;
 	int kernel_radius = (patch - 1) / 2;
-
 	if (id1 < size1) {
 		float conv_max = -FLT_MAX;
 		int y1 = id1 / w1, x1 = id1 % w1;
@@ -408,13 +407,11 @@ __global__ void patchmatch_argmax_kernel(
 					continue;
 				if (y2 > h2 - 1 - kernel_radius && !(y1 > h1 - 1 - kernel_radius))
 					continue;
-					
-
+				 
 				if (conv_result > conv_max) {
 					conv_max = conv_result;
 					correspondence[id1 * 2 + 0] = x2;
 					correspondence[id1 * 2 + 1] = y2;
-
 				}
 				// if (conv_result < conv_min) {
 				// 	conv_min = conv_result;

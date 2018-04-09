@@ -15,7 +15,6 @@ local cmd = torch.CmdLine()
 cmd:option('-style_image', 'examples/inputs/seated-nude.jpg', 'Style target image')
 cmd:option('-content_image', 'examples/inputs/tubingen.jpg', 'Content target image')
 cmd:option('-cnnmrf_image', 'examples/inputs/cnnmrf.jpg', 'CNNMRF image')
-cmd:option('-init_image', 'examples/inputs/init.jpg', 'Init image')
 cmd:option('-tmask_image', 'examples/inputs/t_mask.jpg', 'Content tight mask image')
 cmd:option('-mask_image', 'examples/inputs/t_mask.jpg', 'Content loose mask image')
 cmd:option('-image_size', 700, 'Maximum height / width of generated image')
@@ -47,8 +46,10 @@ cmd:option('-patchmatch_size', 3)
 -- RefineNNF 
 cmd:option('-refine_size', 5)
 cmd:option('-refine_iter', 1)
+-- Ring 
+cmd:option('-ring_radius', 1) 
 -- Wiki Art
-cmd:option('-wikiart_fn', 'data/wikiart_output.txt')
+cmd:option('-wikiart_fn', 'wikiart_output.txt')
 
 local function main(params)
   cutorch.setDevice(params.gpu + 1)
@@ -59,14 +60,14 @@ local function main(params)
   idx = cutorch.getDevice()
   print('Gpu, idx      = ', params.gpu, idx)
   
-  local layers         = string.format('relu1_1,relu2_1,relu3_1,relu4_1,relu5_1'):split(",")
+  local layers         = string.format('relu1_1,relu2_1,relu3_1,relu4_1'):split(",")
   local content_layers = string.format('relu4_1'):split(",")  
   local style_layers   = string.format('relu1_1,relu2_1,relu3_1,relu4_1'):split(",")
   local hist_layers    = string.format('relu1_1,relu4_1'):split(",") 
-  local content_weight = 1
-  local style_weight   = 1
-  local hist_weight    = 1 
-  local tv_weight      = 1    
+  local content_weight = 1.0 
+  local style_weight   = 1.0 
+  local hist_weight    = 1.0 
+  local tv_weight      = 1.0  
   local num_iterations = params.num_iterations
 
   local content_image       = image.load(params.content_image, 3)
@@ -77,13 +78,9 @@ local function main(params)
   style_image               = image.scale(style_image, params.image_size, 'bilinear')
   local style_image_caffe   = preprocess(style_image):float():cuda()
   
-  local cnnmrf_image        = content_image:clone() --image.load(params.cnnmrf_image, 3)
-  cnnmrf_image              = image.scale(cnnmrf_image, params.image_size, 'bilinear')
-  local cnnmrf_image_caffe  = preprocess(cnnmrf_image):float():cuda()
-  
-  local init_image          = content_image:clone() --image.load(params.init_image, 3)
-  init_image                = image.scale(init_image, params.image_size, 'bilinear')
-  local init_image_caffe    = preprocess(init_image):float():cuda()
+  local cnnmrf_image       = image.load(params.cnnmrf_image, 3)
+  cnnmrf_image             = image.scale(cnnmrf_image, params.image_size, 'bilinear')
+  local cnnmrf_image_caffe = preprocess(cnnmrf_image):float():cuda()
 
   -- Loose mask 
   local mask_image     = image.load(params.mask_image, 3)[1]
@@ -99,13 +96,7 @@ local function main(params)
   local tkernel             = image.gaussian(2*tr+1, tr, 1, true):float()
   tmask_image               = image.convolve(tmask_image, tkernel, 'same')
 
-  -- Note: We used pre-trained style estimator (on wikiart dataset). 
-  --       Modify here for custom images or wait for us to release the pre-trained model...
-  -- style_weight, hist_weight, tv_weight = params_wikiart_genre(style_image, params.index, params.wikiart_fn)
-  content_weight = 1.0
-  style_weight   = 1.0
-  hist_weight    = 1.0 
-  tv_weight      = 1.0 
+  style_weight, hist_weight, tv_weight = params_wikiart_genre(style_image, params.index, params.wikiart_fn)
 
   -- load VGG-19 network
   local cnn = loadcaffe.load(params.proto_file, params.model_file, params.backend):float():cuda()
@@ -143,11 +134,13 @@ local function main(params)
     local BP   = target_features[i]:clone() 
     local N_A  = normalize_features(A)
     local N_BP = normalize_features(BP)
+
     local c, h, w = A:size(1), A:size(2), A:size(3)
     local _, h2, w2 = BP:size(1), BP:size(2), BP:size(3)
     if h ~= h2 or w ~= w2 then 
       print("  Input and target should have the same dimension! h, h2, w, w2 = ", h, h2, w, w2)
     end 
+
     local tmask = image.scale(torch.gt(tmask_image_ori[1], 0.1), w, h, 'simple'):cudaInt()
     if i == #layers then -- i = 5, relu5_1
       print("  Initializing NNF in layer ", i, ":", name, " with patch ", params.patchmatch_size) 
@@ -156,7 +149,7 @@ local function main(params)
       local guide = image.scale(style_image, w, h, 'bilinear'):float():cuda()
       print("  Refining NNF...")
       corr = cuda_utils.refineNNF(N_A, N_BP, init_corr, guide, tmask, params.refine_size, params.refine_iter)
-      mask = cuda_utils.Ring2(N_A, N_BP, corr, 0, tmask)
+      mask = cuda_utils.Ring2(N_A, N_BP, corr, params.ring_radius, tmask)
       
       curr_corr = corr 
       curr_mask = mask       
@@ -165,6 +158,7 @@ local function main(params)
       curr_corr = cuda_utils.upsample_corr(corr, h, w)
       curr_mask = image.scale(mask:double(), w, h, 'simple'):cudaInt()
     end   
+      
     table.insert(match_features, BP)
     table.insert(match_masks, curr_mask)
   end 
@@ -198,6 +192,7 @@ local function main(params)
   local content_losses, style_losses, hist_losses = {}, {}, {}
   local next_content_idx, next_style_idx, next_hist_idx = 1, 1, 1
   local net = nn.Sequential()
+
 
   local tv_mod = nn.TVLoss(tv_weight, mask_image):float():cuda()
   net:add(tv_mod)
@@ -241,7 +236,7 @@ local function main(params)
 
 
         local gram_feature = gram_features[next_style_idx]
-        local gram_mask    = gram_match_masks[next_style_idx] 
+        local gram_mask    = gram_match_masks[next_style_idx] --mask_image --torch.ones(h1, w1) --gram_match_masks[next_style_idx]
         local gram_msk     = gram_mask:float():repeatTensor(1,1,1):expandAs(input):cuda()
         local target_gram  = gram:forward(torch.cmul(gram_feature, gram_msk)):clone()
         target_gram:div(gram_mask:sum() * c)
@@ -255,7 +250,7 @@ local function main(params)
         if name == hist_layers[next_hist_idx] then 
           print("Setting up histogram layer", i, ":", layer.name)
           local maskI = torch.gt(mask_image, 0.1)
-          local maskJ = hist_match_masks[next_hist_idx]:byte() 
+          local maskJ = hist_match_masks[next_hist_idx]:byte() -- maskI:clone() --torch.ones(h1, w1):byte() -- 
           local hist_feature = hist_features[next_hist_idx]
           local loss_module = nn.HistLoss(hist_weight, input, hist_feature, 256, maskI, maskJ, mask_image):float():cuda()
           net:add(loss_module)
@@ -291,7 +286,6 @@ local function main(params)
   else
     error('Invalid init type')
   end
-  img = init_image_caffe:clone():float():cuda()
    
   
   -- Run it through the network once to get the proper size for the gradient
@@ -339,9 +333,9 @@ local function main(params)
     local should_save = params.save_iter > 0 and t % params.save_iter == 0
     should_save = should_save or t == num_iterations
     if should_save then
+      -- local disp = deprocess(img:double())
       local disp = torch.cmul(img:double(), tmask_image:double())
       disp:add(torch.cmul(style_image_caffe:double(), 1.0 - tmask_image:double()))
-      -- disp:add(torch.cmul(style_image_caffe:double(), 1.0 - tmask_image_ori:double()))
       disp = deprocess(disp)
       disp = image.minmax{tensor=disp, min=0, max=1}
 
@@ -492,6 +486,7 @@ function params_wikiart_genre(style_image, index, wikiart_fn)
 
   local fid     = io.open(wikiart_fn)
   local sty_idx = 0
+  -- local label   = nil
   local sty_lev = nil
   for line in fid:lines() do 
     if sty_idx == index then 
@@ -534,10 +529,8 @@ function ContentLoss:updateGradInput(input, gradOutput)
 
   self.gradInput:cmul(self.msk)
   local magnitude = torch.norm(self.gradInput, 2)
-  -- if magnitude > self.strength then 
-    self.gradInput:div(magnitude + 1e-8)
-    self.gradInput:mul(self.strength)
-  -- end 
+  self.gradInput:div(magnitude + 1e-8)
+  self.gradInput:mul(self.strength)
 
   self.gradInput:add(gradOutput)
   self.gradInput:cmul(self.msk)
@@ -591,10 +584,8 @@ function StyleLoss:updateGradInput(input, gradOutput)
     
   self.gradInput:cmul(self.msk)
   local magnitude = torch.norm(self.gradInput, 2) 
-  -- if magnitude > self.strength then 
-    self.gradInput:div(magnitude + 1e-8)
-    self.gradInput:mul(self.strength)
-  -- end 
+  self.gradInput:div(magnitude + 1e-8)
+  self.gradInput:mul(self.strength)
 
   self.gradInput:add(gradOutput)
   self.gradInput:cmul(self.msk)
@@ -657,10 +648,8 @@ function HistLoss:updateGradInput(input, gradOutput)
   self.loss = err:sum() * self.strength / input:nElement()
 
   local magnitude = torch.norm(self.gradInput, 2)
-  -- if magnitude > self.strength then 
-    self.gradInput:div(magnitude + 1e-8)
-    self.gradInput:mul(self.strength)
-  -- end 
+  self.gradInput:div(magnitude + 1e-8)
+  self.gradInput:mul(self.strength)
 
   self.gradInput:add(gradOutput)
   self.gradInput:cmul(self.mask)
@@ -700,10 +689,8 @@ function TVLoss:updateGradInput(input, gradOutput)
 
   self.gradInput:cmul(self.msk)
   local magnitude = torch.norm(self.gradInput, 2) 
-  -- if magnitude > self.strength then 
-    self.gradInput:div(magnitude + 1e-8)
-    self.gradInput:mul(self.strength)
-  -- end 
+  self.gradInput:div(magnitude + 1e-8)
+  self.gradInput:mul(self.strength)
 
   self.gradInput:add(gradOutput)
   self.gradInput:cmul(self.msk)
