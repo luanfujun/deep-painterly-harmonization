@@ -2,7 +2,7 @@ import os
 import math
 
 numImgs = 35
-numGpus = 16
+numGpus = 16 
 
 if os.path.exists('results') == 0:
 	os.mkdir('results')
