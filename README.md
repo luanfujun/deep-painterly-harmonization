@@ -216,4 +216,11 @@ Here are some results from our algorithm (from left to right are original painti
 </p>
 
 
+## Acknowledgement
+* Our torch implementation is based on Justin Johnson's [code](https://github.com/jcjohnson/neural-style);
+* Histogram loss is inspired by [Risser et al.](https://arxiv.org/abs/1701.08893)
+
+
+## Contact
+Feel free to contact me if there is any question (Fujun Luan fl356@cornell.edu).
 
