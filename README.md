@@ -38,7 +38,7 @@ run('filt_cnn_artifact.m')
 in Matlab or Octave. The final output will be in ``results/``.
 
 ## Examples
-Here are some results from our algorithm (from left to right are painting, naive composite and our output):
+Here are some results from our algorithm (from left to right are original painting, naive composite and our output):
 <p align='center'>
   <img src='data/0_target.jpg' width='290'/>
   <img src='data/0_naive.jpg' width='290'/>
