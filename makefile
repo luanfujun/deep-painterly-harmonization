@@ -1,4 +1,4 @@
-PREFIX=/home/luanfujun/torch/install
+PREFIX=/home/ubuntu/torch/install
 NVCC_PREFIX=/usr/local/cuda-8.0/bin
 CFLAGS=-I$(PREFIX)/include/THC -I$(PREFIX)/include/TH -I$(PREFIX)/include
 LDFLAGS_NVCC=-L$(PREFIX)/lib -Xlinker -rpath,$(PREFIX)/lib -lluaT -lTHC -lTH -lpng -lluajit -lgomp
