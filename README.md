@@ -1,5 +1,5 @@
 # deep-painterly-harmonization
-Code and data for paper "Deep Painterly Harmonization". (ArXiv TBD!) 
+Code and data for paper "Deep Painterly Harmonization](http://www.cs.cornell.edu/~fujun/files/painting-arxiv18/deeppainting.pdf)" 
 
 ## Disclaimer 
 **This software is published for academic and non-commercial use only.**
