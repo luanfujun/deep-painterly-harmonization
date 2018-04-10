@@ -26,7 +26,6 @@ make clean && make
 ```
 
 ## Usage
-### Quick start
 To generate all results (in  ``data/``) using the provided scripts, simply run
 ```
 python gen_all.py
