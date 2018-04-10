@@ -82,7 +82,7 @@ Here are some results from our algorithm (from left to right are original painti
 <p align='center'>
   <img src='data/8_target.jpg' width='290'/>
   <img src='data/8_naive.jpg' width='290'/>
-  <img src='results/8_final_res2.png' width='290'/>
+  <img src='results/8_final_res.png' width='290'/>
 </p>
 <p align='center'>
   <img src='data/9_target.jpg' width='290'/>
