@@ -1,5 +1,5 @@
 # deep-painterly-harmonization
-Code and data for paper "[Deep Photo Harmonization](arxiv link coming soon)" 
+Code and data for paper "Deep Photo Harmonization". Arxiv link: coming soon 
 
 ## Disclaimer 
 **This software is published for academic and non-commercial use only.**
