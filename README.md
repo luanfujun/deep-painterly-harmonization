@@ -137,7 +137,7 @@ Here are some results from our algorithm (from left to right are original painti
 <p align='center'>
   <img src='data/17_target.jpg' width='290'/>
   <img src='results/17_naive_sherlock.jpg' width='290'/>
-  <img src='results/17_result_sherlock.png' width='290'/>
+  <img src='results/17_result_sherlock.jpg' width='290'/>
 </p>
 <p align='center'>
   <img src='data/18_target.jpg' width='290'/>
