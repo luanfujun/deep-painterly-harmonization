@@ -27,15 +27,15 @@ make clean && make
 
 ## Usage
 ### Quick start
-To generate all results (in ''data/'') using the provided scripts, simply run
-'''
+To generate all results (in  ``data/``) using the provided scripts, simply run
+```
 python gen_all.py
-'''
+```
 in Python and then 
-'''
+```
 run('filt_cnn_artifact.m')
-'''
-in Matlab or Octave. The final output will be in ''results/''.
+```
+in Matlab or Octave. The final output will be in ``results/``.
 
 ## Examples
 Here are some results from our algorithm (from left to right are painting, naive composite and our output):
