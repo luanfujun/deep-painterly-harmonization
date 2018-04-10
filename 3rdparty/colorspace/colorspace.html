@@ -1,0 +1,778 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />  
+<meta name="description" content="Convert colors
+between sRGB, YCbCr, YPbPr, YDbDr, YUV, YIQ, HSV, HSL, HSI, XYZ, Lab, Luv,
+LCH, and CAT02 LMS." /> 
+<meta name="keywords" content="C, C++, MATLAB, color" />
+<title>Colorspace Transforms</title>
+<style type="text/css"> 
+a {color: blue;}
+
+td.leftbracket {border-top:solid 1px black;
+border-left:solid 1px black;border-bottom:solid 1px black;}
+
+td.rightbracket {border-top:solid 1px black;
+border-right:solid 1px black;border-bottom:solid 1px black;}
+
+body {background-color: white; margin:10px;}
+
+h2 {font-size: medium;}
+
+pre.codeinput {margin-left: 30px;}
+
+span.keyword {color: #0000FF}
+span.comment {color: #228B22}
+span.string {color: #A020F0}
+
+pre.codeoutput {color: gray; font-style: italic;}
+
+p,h1,h2,div {
+  width: 600px;
+  max-width: 600px;
+  width:expression(document.body.clientWidth > 620 ? "600px": "auto" );
+}
+</style></head><body>
+
+<div style="width:600px">
+<table border="0" cellpadding="0"><tr><td colspan="2">
+<span style="font-size: x-large"><b>Colorspace Transforms</b></span></td></tr>
+<tr><td>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td>by Pascal Getreuer</td></tr></table>
+
+<p>This package converts colors between sRGB, Y'P<sub>b</sub>P<sub>r</sub>,
+Y'C<sub>b</sub>C<sub>r</sub>, JPEG-Y'C<sub>b</sub>C<sub>r</sub>, Y'UV, Y'IQ,
+Y'D<sub>b</sub>D<sub>r</sub>, HSV,
+HSL, HSI, CIE XYZ, CIE L*a*b* (CIELAB), CIE L*u*v* (CIELUV), and CIE L*ch
+(CIELCH), and CIE CAT02 LMS.  It can be used either as part of a C/C++ program or compiled as 
+a <span style="font-variant:small-caps">Matlab</span> MEX function.</p>
+
+<h2>Contents</h2>
+<ul>
+<li><a href="#License">License (BSD)</a></li>
+<li><a href="#Compiling">Compiling</a></li>
+<li><a href="#CUsage">C Usage</a></li>
+<li><a href="#MUsage"><span style="font-variant:small-caps">Matlab</span> Usage</a></li>
+<li><a href="#Discrepancies">Discrepancies</a></li>
+<li><a href="#Challenges">Challenges in Color Representation</a></li>
+<li><a href="#Gamma">Gamma-Correction</a></li>
+<li><a href="#YCbCr">Y'CbCr and other Luma+Chroma
+Representations</a></li>
+<li><a href="#HSV">HSV, HSL, and HSI</a></li>
+<li><a href="#CIE">CIE Standard Color Spaces</a></li>
+<li><a href="#Test">Accuracy Test</a></li>
+<li><a href="#References">References</a></li>
+</ul>
+
+<h2 id="License">License (BSD)</h2>
+
+<p>Copyright &copy;&nbsp;2005&ndash;2010, Pascal Getreuer<br />
+All rights reserved.</p>
+
+<p>Redistribution and use in source and binary forms, with or without 
+modification, are permitted provided that the following conditions are 
+met:</p>
+
+<ul>
+<li>Redistributions of source code must retain the above copyright 
+notice, this list of conditions and the following disclaimer.</li>
+<li>Redistributions in binary form must reproduce the above copyright 
+notice, this list of conditions and the following disclaimer in 
+the documentation and/or other materials provided with the distribution.</li>
+</ul>
+      
+<p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &ldquo;AS IS&rdquo; 
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+POSSIBILITY OF SUCH DAMAGE.</p>
+
+<h2 id="Compiling">Compiling</h2>
+<p><tt>colorspace</tt> can be used either as part of a C/C++ program or compiled as 
+a <span style="font-variant:small-caps">Matlab</span> MEX function.</p>
+
+<p>To demonstrate <tt>colorspace</tt> for use in C programs, a small command line
+program <tt>colorcalc</tt> is included.  The program is compiled with GCC by</p>
+<p style="margin-left:30px"><tt>gcc colorcalc.c colorspace.c -lm -o colorcalc</tt></p>
+<p>This should produce a command line program <tt>colorcalc</tt> that converts
+input sRGB values to other representations.</p>
+
+<p>For use in <span style="font-variant:small-caps">Matlab</span>,
+<tt>colorspace</tt> is compiled as a MEX function by entering</p>
+<p style="margin-left:30px"><tt>mex colorspace.c</tt></p>
+<p>on the <span style="font-variant:small-caps">Matlab</span> command console.
+For MEX compiling to work, your system must have a C compiler and <span style="font-variant:small-caps">Matlab</span>
+must be configured to use it.  For more information, see the help documentation for the <tt>mex</tt> command.</p>
+
+<p>As an alternative to MEX, a pure M-code version <tt>colorspace.m</tt> is also included.</p>
+
+<h2 id="CUsage">C Usage</h2>
+
+<p>First call <tt>GetColorTransform</tt>, specifying the source and destination 
+color spaces as <tt>"dest&lt;-src"</tt> or <tt>"src-&gt;dest"</tt>.  Then call 
+<tt>ApplyColorTransform</tt> to perform the transform:</p>
+<pre class="codeinput">
+num S[3] = {173, 0.8, 0.5};
+num D[3];
+colortransform Trans;
+       
+if(!(GetColorTransform(&amp;Trans, <span class="string">"HSI -> Lab"</span>)))
+{
+    printf(<span class="string">"Invalid syntax or unknown color space\n"</span>);
+    return;
+}   
+       
+ApplyColorTransform(Trans, &amp;D[0], &amp;D[1], &amp;D[2], S[0], S[1], S[2]);
+</pre>
+<p>&ldquo;<tt>num</tt>&rdquo; is a typedef defined at the beginning of <tt>colorspace.h</tt> that may be set
+to either double or float, depending on the application.</p>
+
+<p>A <tt>colortransform</tt> may be applied any number of times.  To transform the color representation 
+of an entire image, call <tt>GetColorTransform</tt> once and then call 
+<tt>ApplyColorTransform</tt> for each pixel.</p>
+
+<p>Specific transformation routines can also be called directly.  The following
+converts an sRGB color to CIELAB and then back to sRGB:</p>
+<pre class="codeinput">
+num R = 0.85, G = 0.32, B = 0.5;
+num L, a, b;
+Rgb2Lab(&amp;L, &amp;a, &amp;b, R, G, B);
+Lab2Rgb(&amp;R, &amp;G, &amp;B, L, a, b);
+</pre>
+<p>Generally, the calling syntax is</p>
+<pre class="codeinput">
+Foo2Bar(&amp;B0, &amp;B1, &amp;B2, F0, F1, F2);
+</pre>
+<p>where (F0,F1,F2) are the coordinates of a color in space &ldquo;Foo&rdquo; and
+(B0,B1,B2) are the transformed coordinates in space &ldquo;Bar.&rdquo;  For any 
+transformation routine, its inverse has the syntax</p>
+<pre class="codeinput">
+Bar2Foo(&amp;F0, &amp;F1, &amp;F2, B0, B1, B2);
+</pre>
+<p>The transform routines are consistently named with the first letter of a
+color space capitalized with following letters in lower case and omitting
+prime symbols.  For example, <tt>Rgb2Ydbdr</tt> converts sRGB to Y'D<sub>b</sub>D<sub>r</sub>.</p>
+
+<p>All transformations assume a two degree observer angle and a D<sub>65</sub> illuminant.
+The white point can be changed by modifying the <tt>WHITEPOINT_X</tt>, <tt>WHITEPOINT_Y</tt>,  
+<tt>WHITEPOINT_Z</tt> definitions at the beginning of <tt>colorspace.h</tt>.</p>
+
+<p>List of transformation routines:</p>
+<pre class="codeinput">
+Rgb2Yuv(num *Y, num *U, num *V, num R, num G, num B)
+Rgb2Ycbcr(num *Y, num *Cb, num *Cr, num R, num G, num B)
+Rgb2Jpegycbcr(num *Y, num *Cb, num *Cr, num R, num G, num B)
+Rgb2Ypbpr(num *Y, num *Pb, num *Pr, num R, num G, num B)
+Rgb2Ydbdr(num *Y, num *Db, num *Dr, num R, num G, num B)
+Rgb2Yiq(num *Y, num *I, num *Q, num R, num G, num B)
+Rgb2Hsv(num *H, num *S, num *V, num R, num G, num B)
+Rgb2Hsl(num *H, num *S, num *L, num R, num G, num B)
+Rgb2Hsi(num *H, num *S, num *I, num R, num G, num B)
+Rgb2Xyz(num *X, num *Y, num *Z, num R, num G, num B)
+Xyz2Lab(num *L, num *a, num *b, num X, num Y, num Z)
+Xyz2Luv(num *L, num *u, num *v, num X, num Y, num Z)
+Xyz2Lch(num *L, num *C, num *h, num X, num Y, num Z)
+Xyz2Cat02lms(num *L, num *M, num *S, num X, num Y, num Z) 
+Rgb2Lab(num *L, num *a, num *b, num R, num G, num B)
+Rgb2Luv(num *L, num *u, num *v, num R, num G, num B)
+Rgb2Lch(num *L, num *C, num *h, num R, num G, num B)
+Rgb2Cat02lms(num *L, num *M, num *S, num R, num G, num B) 
+</pre>
+<p>(Similarly for the inverse transformations.)</p>
+
+<p>It is possible to transform between two arbitrary color spaces by first
+transforming from the source space to sRGB and then transforming from
+sRGB to the desired destination space.  For transformations between CIE
+color spaces, it is convenient to use XYZ as the intermediate space.  This
+is the strategy used by <tt>GetColorTransform</tt> and <tt>ApplyColorTransform</tt>.</p>
+
+<h2 id="MUsage">MATLAB Usage</h2>
+
+<p><tt>B = colorspace(S,A)</tt> converts the color
+representation of image <tt>A</tt> where <tt>S</tt> is a string
+specifying the conversion.  <tt>S</tt> tells the source and
+destination color spaces, <tt>S = 'dest&lt;-src'</tt>, or
+alternatively, <tt>S = 'src->dest'</tt>.  Supported color
+spaces are</p>
+
+<table border="0" style="margin-left:15px">
+<tr><td><tt>'RGB'</tt></td><td>sRGB IEC 61966-2-1</td></tr>
+<tr><td><tt>'YPbPr'</tt></td><td>Luma (ITU-R BT.601) + Chroma</td></tr>
+<tr><td><tt>'YCbCr'</tt></td><td>Luma + Chroma (digitized version of
+Y'P<sub>b</sub>P<sub>r</sub>)</td></tr>
+<tr><td><tt>'JPEG-YCbCr'</tt></td><td>Luma + Chroma space used in JFIF JPEG</td></tr>
+<tr><td><tt>'YUV'</tt></td><td>NTSC PAL Y'UV Luma + Chroma</td></tr>
+<tr><td><tt>'YIQ'</tt></td><td>NTSC Y'IQ Luma + Chroma</td></tr>
+<tr><td><tt>'YDbDr'</tt></td><td>SECAM Luma + Chroma</td></tr>
+<tr><td><tt>'HSV' or 'HSB'&nbsp;&nbsp;</tt></td><td>Hue Saturation Value/Brightness</td></tr>
+<tr><td><tt>'HSL' or 'HLS'</tt></td><td>Hue Saturation Luminance</td></tr>
+<tr><td><tt>'HSI'</tt></td><td>Hue Saturation Intensity</td></tr>
+<tr><td><tt>'XYZ'</tt></td><td>CIE XYZ</td></tr>
+<tr><td><tt>'Lab'</tt></td><td>CIE L*a*b* (CIELAB)</td></tr>
+<tr><td><tt>'Luv'</tt></td><td>CIE L*u*v* (CIELUV)</td></tr>
+<tr><td><tt>'LCH'</tt></td><td>CIE L*C*H* (CIELCH)</td></tr>
+<tr><td><tt>'CAT02 LMS'</tt></td><td>CIE CAT02 LMS</td></tr>
+</table>
+<p>All conversions assume 2 degree observer and D<sub>65</sub>
+illuminant.  Color space names are case insensitive.  When sRGB is
+the source or destination, it can be omitted. For example
+<tt>'yuv&lt;-'</tt> is short for <tt>'yuv&lt;-rgb'</tt>.</p>
+
+<p><span style="font-variant:small-caps">Matlab</span> uses two standard data formats for
+sRGB: double data with intensities in the range 0 to 1, and uint8
+data with integer-valued intensities from 0 to 255.  <tt>colorspace</tt>
+expects sRGB data to be scaled between 0 and 1, and only accepts double data.</p>
+
+<p>If <tt>A</tt> is an M&times;3 array, like a colormap,
+<tt>B</tt> will also have size M&times;3.</p>
+
+<p><b>Typical Usage</b><br />
+How does one get color image data into <span style="font-variant:small-caps">Matlab</span>?
+The function <tt>imread</tt> imports most formats as a uint8 array of
+size M&times;N&times;3, where the third dimension separates the R',G',
+and B' color channels.</p>
+<pre class="codeinput">
+A = imread(<span class="string">'boats.png'</span>);  <span class="comment">% Import color data as uint8 in the range [0,255]</span>
+A = double(A)/255;        <span class="comment">% Cast to double in the range [0,1]</span>
+
+<span class="comment">% View the image</span>
+subplot(2,2,1);
+image(A);
+axis <span class="string">image</span>
+</pre>
+<p>(For images using palette indexing, <tt>imread</tt> instead returns
+an array of color indices and a colormap; palette-based images require
+other handling.)  To view a color image, use <tt>image</tt> or
+<tt>imshow</tt>.  The image may either be a uint8 array with
+intensities in the range [0,255] or a double array with the range
+[0,1].</p>
+
+<p>Once an sRGB array is loaded, <tt>colorspace</tt> can convert it
+to another color representation.  To convert to
+Y'P<sub>b</sub>P<sub>r</sub>, for example, use</p>
+<pre class="codeinput">
+B = colorspace(<span class="string">'YPbPr&lt;-RGB'</span>,A);
+</pre>
+<p>Since the resulting array <tt>B</tt> is not in sRGB
+representation, it no longer makes sense to visualize it as a single
+color image, other than transforming it back to sRGB first.  Instead, 
+view each of the channels <tt>B(:,:,1)</tt>,
+<tt>B(:,:,2)</tt>, <tt>B(:,:,3)</tt> individually as gray-scale
+images:</p>
+<pre class="codeinput">
+<span class="comment">% View the individual channels</span>
+subplot(2,2,1);
+imagesc(B(:,:,1));
+colormap(gray(256));
+axis <span class="string">image</span>
+title <span class="string">'Y'''</span>
+subplot(2,2,3);
+imagesc(B(:,:,2));
+colormap(gray(256));
+axis <span class="string">image</span>
+title <span class="string">P_b</span>
+subplot(2,2,4);
+imagesc(B(:,:,3));
+colormap(gray(256));
+axis <span class="string">image</span>
+title <span class="string">P_r</span>
+</pre>
+
+<p>To transform <tt>B</tt> back to sRGB, use <tt>colorspace</tt> again:</p>
+<pre class="codeinput">
+ARecovered = colorspace(<span class="string">'RGB&lt;-YPbPr'</span>,B);
+</pre>
+
+<h2 id="Discrepancies">Discrepancies</h2>
+
+<p>While much effort has been made to make <tt>colorspace</tt> accurate and in agreement with 
+standards, it is possible to see differences between <tt>colorspace</tt> and other color 
+transformation software.  Potential sources for discrepancy are</p>
+<ul>
+<li>differences in how the components are scaled, for example, sRGB values scaled in [0,255]
+vs. [0,1];</li>
+<li>different conventions for handling out-of-gamut colors;</li>
+<li>naming confusion over similar but distinct color spaces 
+(e.g., HSV vs. HSL vs. HSI and also Y'P<sub>b</sub>P<sub>r</sub> vs. Y'UV vs. Y'IQ);</li>
+<li>(for CIE spaces) differences in the gamma correction function, observer angle, or 
+white point.</li>
+</ul>
+<p>Finally, although hopefully unlikely, it is possible that a discrepancy is due to a bug in
+<tt>colorspace</tt>.</p>
+
+<p><tt>colorspace</tt> does have the property that transformation of an in-gamut color followed
+by the inverse transformation accurately recovers the original color (see the <a href="#Test">Accuracy Test</a>).
+</p>
+
+<p>Transformations with <tt>colorspace</tt> assume a 2 degree observe, D<sub>65</sub> illuminant,
+and using the gamma correction function from <a href="#Gamma">Gamma Correction</a>.</p>
+
+<p>Beware that <tt>colorspace</tt>'s transformations generally do not constrain colors to be in-gamut.
+Particularly, transforming from another space to sRGB may obtain 
+R'G'B' values outside of the [0,1] range.  In <span style="font-variant:small-caps">Matlab</span>, 
+the result should be clamped to [0,1] before displaying:</p>
+<pre class="codeinput">
+image(min(max(B,0),1));  <span class="comment">% Clamp B to [0,1] and display</span>
+</pre>
+
+<h2 id="Challenges">Challenges in Color Representation</h2>
+
+<p>Device-independent, quantitative description of color is a
+surprisingly challenging problem.  For example, four shades of gray
+surrounded by black are perceived differently than the same four
+shades surrounded by white <a href="#References"
+style="text-decoration:none">[1]</a>.</p>
+
+<table border="0"><tr>
+<td><table border="0" style="background-color:black">
+<tr><td align="center" valign="middle" style="width:115px;height:50px">
+<table border="0">
+<tr><td style="background-color:#E0E0E0;width:20px">&nbsp;</td>
+<td style="background-color:#B0B0B0;width:20px">&nbsp;</td>
+<td style="background-color:#707070;width:20px">&nbsp;</td>
+<td style="background-color:#303030;width:20px">&nbsp;</td>
+</tr></table></td></tr></table></td></tr>
+<tr><td>&nbsp;</td></tr>
+<tr><td>
+<table border="0" style="background:color:white">
+<tr><td align="center" valign="middle" style="width:115px;height:50px">
+<table border="0">
+<tr><td style="background-color:#E0E0E0;width:20px">&nbsp;</td>
+<td style="background-color:#B0B0B0;width:20px">&nbsp;</td>
+<td style="background-color:#707070;width:20px">&nbsp;</td>
+<td style="background-color:#303030;width:20px">&nbsp;</td>
+</tr></table></td></tr></table>
+</td></tr></table>
+<p><i>Surrounding illumination affects the perceived color.</i></p>
+
+<p>On black background, the lightest shade of gray seems to be almost
+white.  But on white background, the same shade appears significantly
+darker.  This discrepancy suggests that the perceived colors on a
+monitor depend on the illumination of the surrounding room.  Thus for
+precise color description, color specifications include the intended
+viewing conditions.</p>
+
+<p>The <i>intensity</i> of a color is defined as the watts per unit
+area rendered by the display device.  Another problem is that even
+under equal intensity, some colors are visually brighter than
+others.</p>
+
+<table border="0"><tr>
+<td><table border="0" style="background-color:black">
+<tr><td align="center" valign="middle" style="width:195px;height:50px">
+<table border="0">
+<tr><td style="background-color:#FFFFFF;width:20px">&nbsp;</td>
+<td style="background-color:#FFFF00;width:20px">&nbsp;</td>
+<td style="background-color:#00FFFF;width:20px">&nbsp;</td>
+<td style="background-color:#00FF00;width:20px">&nbsp;</td>
+<td style="background-color:#FF00FF;width:20px">&nbsp;</td>
+<td style="background-color:#FF0000;width:20px">&nbsp;</td>
+<td style="background-color:#0000FF;width:20px">&nbsp;</td>
+</tr></table></td></tr></table>
+</td></tr></table>
+<p><i>Intensity &ne; Visual Brightness.</i></p>
+
+<p>To overcome this non-uniformity, many color spaces instead consider
+<i>luminance</i>, a quantitative estimate of the perceived
+brightness.</p>
+
+<p>Different color representations try to overcome these problems,
+with varying degrees of success.  It is for this reason that there are
+so many standard color representations.</p>
+
+<h2 id="Gamma">Gamma Correction</h2>
+
+<p>CRT monitors have a nonlinear relationship between the input
+voltages and the rendered intensities.  To reproduce an image
+accurately, the image is <i>gamma-corrected</i> in such a way that the
+monitor displays the desired intensities.</p>
+
+<p>In <tt>colorspace</tt>, the &ldquo;RGB&rdquo; space is sRGB.  The sRGB space was
+designed in 1996 for direct display on typical CRT monitors and standardized 
+in 1999 by International Electrotechnical Commission (IEC) as IEC 61966-2-1.  
+The &ldquo;s&rdquo; in sRGB is to mean &ldquo;standard.&rdquo;  From 
+linear RGB values, the sRGB values are gamma-compensated by the formula
+<table border="0" style="margin-left:30px"><tr><td>
+R' = 1.055 R<sup>1/2.4</sup> &minus; 0.055&nbsp;&nbsp;</td><td>
+if R &le; 0.0031308,</td></tr><tr><td>
+R' = 12.92 R, </td><td>
+if R &gt; 0.0031308,</td></tr></table>
+<p>and similarly for G' and B' <a href="#References"
+style="text-decoration:none">[4]</a>.</p>
+
+<p>A standard notation is to denote R',G',B' quantities and derived 
+quantities with a prime ' to signify gamma-correction.  Since 
+gamma-correction is already applied by digital cameras as standard 
+practice, most digital image data should be interpreted as R'G'B', 
+and not RGB.</p>
+
+<h2 id="YCbCr">Y'C<sub>b</sub>C<sub>r</sub>
+and other Luma+Chroma Representations</h2>
+
+<p>The <i>luma</i> of a color is an estimate of brightness based on
+gamma-corrected samples.  Its definition (ITU-R Recommendation
+BT.601-4) is</p>
+
+<p style="text-align:center">
+Y'<sub>601</sub> = 0.299 R' + 0.587 G' + 0.114 B'.
+</p>
+
+<p>This luma measure is (up to a scale factor) the Y' in
+Y'P<sub>b</sub>P<sub>r</sub>, Y'C<sub>b</sub>C<sub>r</sub>,
+JPEG-Y'C<sub>b</sub>C<sub>r</sub>, Y'UV, Y'IQ, and
+Y'D<sub>b</sub>D<sub>r</sub>.  The remaining two components in each of
+these representations capture the <i>chroma</i>, the part of a color
+independent of luma <a href="#References"
+style="text-decoration:none">[2]</a>.</p>
+
+<p><b>Y'P<sub>b</sub>P<sub>r</sub></b><br />
+Given R', G', and B' in the range [0,1], 
+the Y'P<sub>b</sub>P<sub>r</sub> components are</p>
+
+<table border="0" style="margin-left:30px"><tr><td>
+<table border="0"><tr>
+<td rowspan="3" class="leftbracket">&nbsp;</td>
+<td align="center">Y'</td>
+<td rowspan="3" class="rightbracket">&nbsp;</td></tr>
+<tr><td align="center">P<sub>b</sub></td></tr><tr>
+<td align="center">P<sub>r</sub></td></tr>
+</table></td><td>=</td><td>
+<table border="0"><tr>
+<td rowspan="3" class="leftbracket">&nbsp;</td>
+<td>0.299</td><td>0.587</td><td>0.114</td>
+<td rowspan="3" class="rightbracket">&nbsp;</td></tr>
+<tr><td>&minus;0.1687367&nbsp;</td>
+<td>&minus;0.331264&nbsp;</td><td>0.5</td></tr>
+<tr><td>0.5</td><td>&minus;0.418688&nbsp;</td>
+<td>&minus;0.081312</td></tr>
+</table></td><td>&times;</td><td>
+<table border="0"><tr>
+<td rowspan="3" class="leftbracket">&nbsp;</td>
+<td align="center">R'</td>
+<td rowspan="3" class="rightbracket">&nbsp;</td></tr>
+<tr><td align="center">G'</td></tr><tr><td align="center">B'</td></tr>
+</table>
+</td></tr></table>
+
+<p>with Y' in [0,1] and P<sub>b</sub>, P<sub>r</sub> in
+[&minus;0.5,0.5].</p>
+
+<p><b>Y'C<sub>b</sub>C<sub>r</sub></b><br />
+Y'C<sub>b</sub>C<sub>r</sub>, also called YCC, is a rescaling of
+Y'P<sub>b</sub>P<sub>r</sub> such that component can be stored as
+8-bit unsigned values.  Given R', G', and B' in the range [0,1],</p>
+
+<table border="0" style="margin-left:30px"><tr><td>
+<table border="0"><tr>
+<td rowspan="3" class="leftbracket">&nbsp;</td>
+<td align="center">Y'</td>
+<td rowspan="3" class="rightbracket">&nbsp;</td></tr>
+<tr><td align="center">C<sub>b</sub></td></tr><tr>
+<td align="center">C<sub>r</sub></td></tr>
+</table></td><td>=</td><td>
+<table border="0"><tr>
+<td rowspan="3" class="leftbracket">&nbsp;</td>
+<td align="center">16</td>
+<td rowspan="3" class="rightbracket">&nbsp;</td></tr>
+<tr><td align="center">128</td></tr><tr>
+<td align="center">128</td></tr>
+</table></td><td>+</td><td>
+<table border="0"><tr>
+<td rowspan="3" class="leftbracket">&nbsp;</td>
+<td>65.481</td><td>128.553</td><td>24.966</td>
+<td rowspan="3" class="rightbracket">&nbsp;</td></tr>
+<tr><td>&minus;37.797&nbsp;</td>
+<td>&minus;74.203</td><td>112.0</td></tr>
+<tr><td>112.0</td><td>&minus;93.786&nbsp;</td>
+<td>&minus;18.214</td></tr>
+</table></td><td>&times;</td><td>
+<table border="0"><tr>
+<td rowspan="3" class="leftbracket">&nbsp;</td>
+<td align="center">R'</td>
+<td rowspan="3" class="rightbracket">&nbsp;</td></tr>
+<tr><td align="center">G'</td></tr><tr><td align="center">B'</td></tr>
+</table>
+</td></tr></table>
+
+<p>with Y' in [16,235] and C<sub>b</sub>, C<sub>r</sub> in
+[16,240].</p>
+
+<p><b>JPEG-Y'C<sub>b</sub>C<sub>r</sub></b><br>
+JPEG-Y'C<sub>b</sub>C<sub>r</sub> is another rescaling of
+Y'P<sub>b</sub>P<sub>r</sub>, used in the JPEG image format,</p>
+
+<p style="text-align:center">
+<table border="0" align="center"><tr><td>
+<table border="0"><tr>
+<td rowspan="3" class="leftbracket">&nbsp;</td>
+<td align="center">Y'</td>
+<td rowspan="3" class="rightbracket">&nbsp;</td></tr>
+<tr><td align="center">C<sub>b</sub></td></tr><tr>
+<td align="center">C<sub>r</sub></td></tr>
+</table></td><td>=</td><td>
+<table border="0"><tr>
+<td rowspan="3" class="leftbracket">&nbsp;</td>
+<td align="center">0</td>
+<td rowspan="3" class="rightbracket">&nbsp;</td></tr>
+<tr><td align="center">0.5</td></tr><tr>
+<td align="center">0.5</td></tr>
+</table></td><td>+</td><td>
+<table border="0"><tr>
+<td rowspan="3" class="leftbracket">&nbsp;</td>
+<td>0.299</td><td>0.587</td><td>0.114</td>
+<td rowspan="3" class="rightbracket">&nbsp;</td></tr>
+<tr><td>&minus;0.1687367&nbsp;</td>
+<td>&minus;0.331264&nbsp;</td><td>0.5</td></tr>
+<tr><td>0.5</td><td>&minus;0.418688&nbsp;</td>
+<td>&minus;0.081312</td></tr>
+</table></td><td>&times;</td><td>
+<table border="0"><tr>
+<td rowspan="3" class="leftbracket">&nbsp;</td>
+<td align="center">R'</td>
+<td rowspan="3" class="rightbracket">&nbsp;</td></tr>
+<tr><td align="center">G'</td></tr><tr><td align="center">B'</td></tr>
+</table>
+</td></tr></table>
+</p>
+
+<p>with Y', C<sub>b</sub>, C<sub>r</sub> in [0,1].</p>
+
+<h2 id="HSV">HSV, HSL, and HSI</h2>
+
+<p>The Hue Saturation Value/Brightness (HSV/HSB) is an intuitive color
+system, measuring the <i>hue</i> of a color as the angle on the HSV
+color wheel, the <i>saturation</i> as the color's vibrancy, and the
+color's <i>value</i> or approximate brightness.</p>
+
+<p>HSV is related to sRGB by</p>
+<table style="margin-left:30px" border="0px">
+<tr><td>H = hexagonal hue angle&nbsp;&nbsp;&nbsp;</td><td>(0 &le; H &lt; 360),</td></tr>
+<tr><td>S = C/V</td><td>(0 &le; S &le; 1),</td></tr>
+<tr><td>V = max(R',G',B')</td><td>(0 &le; V &le; 1),</td></tr>
+</table>
+<p>where C = max(R',G',B') &minus; min(R',G',B').  The hue angle H is computed on
+a hexagon.  The space is geometrically a hexagonal cone.</p>
+
+<p style="text-align:center">
+<img src="colorspace_01.jpg" width="462px" height="209px" alt="" /><br />
+<i>Conic representation of the HSV and HSL color spaces
+(<tt>colorspace_demo.m</tt>).</i>
+</p>
+
+<p>The Hue Saturation Lightness (HSL or HLS) color space, has the same definition for color hue
+as HSV.  The other two components differ such that all colors tend to
+white as lightness increases.</p>
+
+<p>HSL is related to sRGB by</p>
+<table style="margin-left:30px" border="0px">
+<tr><td>H = hexagonal hue angle&nbsp;&nbsp;&nbsp;</td><td>(0 &le; H &lt; 360),</td></tr>
+<tr><td>S = C/(1 - |2L - 1|)</td><td>(0 &le; S &le; 1),</td></tr>
+<tr><td>L = (max(R',G',B') + min(R',G',B'))/2</td><td>(0 &le; L &le; 1),</td></tr>
+</table>
+<p>where H and C are the same as in HSV.  Geometrically, the space is a double hexagonal cone.</p>
+
+<p>A third related space is Hue Saturation Intensity (HSI), which is popular in 
+computer vision.  HSI is related to sRGB by</p>
+<table style="margin-left:30px" border="0px">
+<tr><td>H = polar hue angle&nbsp;&nbsp;&nbsp;</td><td>(0 &le; H &lt; 360),</td></tr>
+<tr><td>S = 1 - min(R',G',B')/I</td><td>(0 &le; S &le; 1),</td></tr>
+<tr><td>I = (R'+G'+B')/3</td><td>(0 &le; I &le; 1).</td></tr>
+</table>
+<p>Unlike HSV and HSL, the hue angle H is computed on a circle rather than a hexagon.</p>
+
+<p>The HSV, HSL, and HSI systems are ambiguous on whether components should
+be based on RGB or gamma-corrected sRGB, and specify no white point.
+When truly device-independent color reproduction is necessary, it is
+better to use a CIE color space <a href="#References"
+style="text-decoration:none">[2]</a>.</p>
+
+<h2 id="CIE">CIE Standard Color Spaces</h2>
+
+<p>In 1931, the Commission Internationale de L'&#201;clairage (CIE)
+defined a standard color system for precise color reproduction called
+XYZ.  The XYZ color space has a linear relationship with
+non-gamma-corrected RGB <a href="#References"
+style="text-decoration:none">[2]</a>:</p>
+
+<table border="0" style="margin-left:30px"><tr><td>
+<table border="0"><tr>
+<td rowspan="3" class="leftbracket">&nbsp;</td>
+<td align="center">R</td>
+<td rowspan="3" class="rightbracket">&nbsp;</td></tr>
+<tr><td align="center">G</td></tr><tr>
+<td align="center">B</td></tr>
+</table></td><td>=</td><td>
+<table border="0"><tr>
+<td rowspan="3" class="leftbracket">&nbsp;</td>
+<td>3.240479</td><td>&minus;1.53715</td><td>&minus;0.498535</td>
+<td rowspan="3" class="rightbracket">&nbsp;</td></tr>
+<tr><td>&minus;0.969256&nbsp;</td>
+<td>1.875992&nbsp;</td><td>0.041556</td></tr>
+<tr><td>0.055648</td><td>&minus;0.204043&nbsp;</td>
+<td>1.057311</td></tr>
+</table></td><td>&times;</td><td>
+<table border="0"><tr>
+<td rowspan="3" class="leftbracket">&nbsp;</td>
+<td align="center">X</td>
+<td rowspan="3" class="rightbracket">&nbsp;</td></tr>
+<tr><td align="center">Y</td></tr><tr><td align="center">Z</td></tr>
+</table>
+</td></tr></table>
+
+<p>The closely-related xyY space defines the <i>chromaticity
+coordinates</i>,</p>
+                                   
+<table border="0"><tr><td valign="top">
+<table border="0"><tr><td>
+x =</td><td>
+<table border="0"><tr><td align="center">X</td></tr>
+<tr><td style="border-top:solid 1px black" align="center">
+X+Y+Z</td></tr></table></td>
+<td>, y =</td><td>
+<table border="0"><tr><td align="center">Y</td></tr>
+<tr><td style="border-top:solid 1px black" align="center">
+X+Y+Z</td></tr></table></td><td>.</td>
+</tr></table></td><td>&nbsp;</td><td style="width:275px">
+<table border="0" cellpadding="0" cellspacing="0">
+<tr><td valign="middle">y</td><td>
+<img src="colorspace_02.jpg" width="222" height="250" alt="" />
+</td></tr><tr><td>&nbsp;</td><td align="center">x</td></tr>
+</table>
+<br />
+<i>The CIE &ldquo;tongue&rdquo;: the region of all colors over
+x and y (<tt>colorspace_ciedemo.m</tt>).</i></td></tr></table>
+
+<p>In the figure, the U-shaped boundary is parameterized by light wavelength.
+The triangular region corresponds to the sRGB space, the range of colors
+that a typical computer monitor can display.</p>
+
+<p>XYZ is the foundation of the L*a*b* (CIELAB), L*u*v* (CIELUV), and
+L*ch color spaces.  Let X<sub>n</sub>,Y<sub>n</sub>,Z<sub>n</sub> be
+the XYZ values of a reference white point.  The white point in
+<tt>colorspace</tt> is the standard D<sub>65</sub> white point,
+X<sub>n</sub> = 0.950456, Y<sub>n</sub> =
+1, Z<sub>n</sub> = 1.088754.  The <i>lightness</i>,
+denoted by L* in each of these spaces, is defined as</p>
+
+<table border="0" style="margin-left:30px"><tr><td>
+L* = 116 (Y/Y<sub>n</sub>)<sup>1/3</sup> &minus; 16,</td><td valign="bottom">
+if Y/Y<sub>n</sub> &gt; (6/29)<sup>3</sup></td></tr><tr><td>
+L* = (Y/Y<sub>n</sub> &minus; 4/29) 108/841, &nbsp;
+</td><td>if Y/Y<sub>n</sub>  &le; (6/29)<sup>3</td></tr></table>
+
+<p>The white point has lightness 100, and provided 0 &le; Y &le;
+Y<sub>n</sub>, L* is in the range [0,100].</p>
+
+<p>The other two components in each representation describe the
+chromaticity.  L*a*b* and L*u*v* both attempt to &quot;perceptually
+linearize&quot; chromaticity, meaning that changes in color values
+correspond to proportional changes in visual importance.  L*ch is
+L*a*b* with chromaticity expressed in polar coordinates.</p>
+
+<p style="text-align:center">
+<img src="colorspace_03.jpg" width="387" height="179" alt="" /><br />
+<i>Visualizations of the L*a*b* and L*u*v* color spaces
+(<tt>colorspace_demo.m</tt>).</i>
+</p>
+
+<h2 id="Test">Accuracy Test</h2>
+
+<p>To verify the invertibility of the color transformations, this test
+transforms sRGB data to a space, inverts, and compares with the
+original data.</p>
+<pre class="codeinput">
+N = 1e5;          <span class="comment">% Number of points to test</span>
+A = rand(N,3);    <span class="comment">% Generate points uniformly in sRGB colorspace</span>
+
+Space = {<span class="string">'YPbPr'</span>,<span class="string">'YCbCr'</span>,<span class="string">'JPEG-YCbCr'</span>,<span class="string">'YDbDr'</span>,<span class="string">'YIQ'</span>,<span class="string">'YUV'</span>,<span class="string">'HSV'</span>,...
+      <span class="string">'HSL'</span>,<span class="string">'HSI'</span>,<span class="string">'XYZ'</span>,<span class="string">'Lab'</span>,<span class="string">'Luv'</span>,<span class="string">'LCH'</span>,<span class="string">'CAT02LMS'</span>};
+fprintf(<span class="string">'\n Transform          RMSE Error   Max Error\n\n'</span>);
+
+<span class="keyword">for</span> k = 1:length(Space)
+   B = colorspace([Space{k},<span class="string">'&lt;-RGB'</span>],A);  <span class="comment">% Convert to Space{k}</span>
+   R = colorspace([<span class="string">'RGB&lt;-'</span>,Space{k}],B);  <span class="comment">% Convert back to sRGB</span>
+   RMSE = sqrt(mean((A(:) - R(:)).^2));
+   MaxError = max(abs(A(:) - R(:)));
+   fprintf(<span class="string">' RGB&lt;-&gt;%-10s   %9.2e    %9.2e\n'</span>, ...
+      Space{k}, RMSE, MaxError);
+<span class="keyword">end</span>
+</pre>
+<pre class="codeoutput">
+ Transform          RMSE Error   Max Error
+
+ RGB&lt;-&gt;YPbPr        9.07e-017    4.44e-016
+ RGB&lt;-&gt;YCbCr        1.06e-016    5.55e-016
+ RGB&lt;-&gt;JPEG-YCbCr   1.06e-016    5.55e-016
+ RGB&lt;-&gt;YDbDr        8.72e-017    4.44e-016
+ RGB&lt;-&gt;YIQ          8.17e-017    4.44e-016
+ RGB&lt;-&gt;YUV          6.99e-017    3.54e-016
+ RGB&lt;-&gt;HSV          7.28e-017    1.22e-015
+ RGB&lt;-&gt;HSL          8.06e-017    1.22e-015
+ RGB&lt;-&gt;HSI          1.10e-016    7.77e-016
+ RGB&lt;-&gt;XYZ          2.30e-016    6.36e-015
+ RGB&lt;-&gt;Lab          1.09e-015    2.10e-014
+ RGB&lt;-&gt;Luv          7.98e-016    2.00e-014
+ RGB&lt;-&gt;LCH          1.11e-015    2.39e-014
+ RGB&lt;-&gt;CAT02 LMS    8.29e-016    1.30e-014
+</pre>
+
+<p>Transformations are accurate to machine precision.  The first
+six spaces, being linearly related to sRGB, have higher accuracy 
+than the nonlinearly-related spaces.</p>
+
+<h2 id="References">References</h2>
+<table border="0" cellpadding="6">
+<tr><td>[1] C. Poynton.  <a
+href="http://www.poynton.com">&quot;Frequently Asked Questions about
+Gamma.&quot;</a> 1998.
+</td></tr>
+<tr><td>[2] C. Poynton.  <a
+href="http://www.poynton.com">&quot;Frequently Asked Questions about
+Color.&quot;</a> 1997.
+</td></tr>
+<tr><td>[3] J. Burkardt.  <a
+href="http://www.csit.fsu.edu/~burkardt/f_src/colors/colors.html">
+&quot;COLORS - Color Coordinate Conversion.&quot;</a> (FORTRAN code.) 2002.
+</td></tr>
+<tr><td>[4] Wikipedia: <a href="http://en.wikipedia.org/wiki/SRGB">"sRGB"</a>
+</td></tr>
+<tr><td>[5] Wikipedia: <a href="http://en.wikipedia.org/wiki/YUV">"YUV"</a>
+</td></tr>
+<tr><td>[6] Wikipedia: <a href="http://en.wikipedia.org/wiki/YUV">"YCbCr"</a>
+</td></tr>
+<tr><td>[7] Wikipedia: <a href="http://en.wikipedia.org/wiki/YUV">"YPbPr"</a>
+</td></tr>
+<tr><td>[8] Wikipedia: <a href="http://en.wikipedia.org/wiki/YUV">"YDbDr"</a>
+</td></tr>
+<tr><td>[9] Wikipedia: <a href="http://en.wikipedia.org/wiki/YUV">"YIQ"</a>
+</td></tr>
+<tr><td>[10] Wikipedia: <a href="http://en.wikipedia.org/wiki/YUV">"HSL and HSV"</a>
+</td></tr>
+<tr><td>[11] Wikipedia: <a href="http://en.wikipedia.org/wiki/YUV">"CIE 1931 color space"</a>
+</td></tr>
+<tr><td>[12] Wikipedia: <a href="http://en.wikipedia.org/wiki/YUV">"Lab color space"</a>
+</td></tr>
+<tr><td>[13] Wikipedia: <a href="http://en.wikipedia.org/wiki/YUV">"CIELUV color space"</a>
+</td></tr>
+<tr><td>[14] Wikipedia: <a href="http://en.wikipedia.org/wiki/YUV">"LMS color space"</a>
+</td></tr>
+</table>
+
+<br>
+
+<p style="font-size:80%">This material is based upon work supported by the National 
+Science Foundation under Award No.&nbsp;DMS-1004694.  Any opinions, findings, and 
+conclusions or recommendations expressed in this material are those of the author(s) 
+and do not necessarily reflect the views of the National Science Foundation.</p>
+
+</div>
+</body>
+</html>
