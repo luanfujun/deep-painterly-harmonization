@@ -36,7 +36,7 @@ run('filt_cnn_artifact.m')
 ```
 in Matlab or Octave. The final output will be in ``results/``.
 
-Note that in the paper we trained a CNN on a dataset of 80,000 paintings collected from [wikiart.org](https://www.wikiart.org), which estimates the stylization level of a given painting and adjust weights accordingly. We will release the pre-trained model in the next update. Users will need to set those weights manually if running on their new paintings. 
+Note that in the paper we trained a CNN on a dataset of 80,000 paintings collected from [wikiart.org](https://www.wikiart.org), which estimates the stylization level of a given painting and adjust weights accordingly. We will release the pre-trained model in the next update. Users will need to set those weights manually if running on their new paintings for now. 
 
 ## Examples
 Here are some results from our algorithm (from left to right are original painting, naive composite and our output):
