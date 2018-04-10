@@ -95,9 +95,15 @@ local function main(params)
   local tr                  = 3;
   local tkernel             = image.gaussian(2*tr+1, tr, 1, true):float()
   tmask_image               = image.convolve(tmask_image, tkernel, 'same')
-
+  
+  -- Note: Modify here for custom painting composites  
+  --       or use our pre-trained model (coming soon) on wikiart dataset... 
   style_weight, hist_weight, tv_weight = params_wikiart_genre(style_image, params.index, params.wikiart_fn)
-
+  -- content_weight = 1.0
+  -- style_weight   = 1.0
+  -- hist_weight    = 1.0 
+  -- tv_weight      = 10.0
+  
   -- load VGG-19 network
   local cnn = loadcaffe.load(params.proto_file, params.model_file, params.backend):float():cuda()
 
