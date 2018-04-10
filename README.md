@@ -86,8 +86,8 @@ Here are some results from our algorithm (from left to right are original painti
 </p>
 <p align='center'>
   <img src='data/8_target.jpg' width='290'/>
-  <img src='data/8_naive.jpg' width='290'/>
-  <img src='results/8_result_balloon.png' width='290'/>
+  <img src='data/8_naive_balloon.png' width='290'/>
+  <img src='results/8_result_balloon.jpg' width='290'/>
 </p>
 <p align='center'>
   <img src='data/9_target.jpg' width='290'/>
