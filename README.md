@@ -231,6 +231,16 @@ Here are some results from our algorithm (from left to right are original painti
 * Our torch implementation is based on Justin Johnson's [code](https://github.com/jcjohnson/neural-style);
 * Histogram loss is inspired by [Risser et al.](https://arxiv.org/abs/1701.08893)
 
+## Citation
+If you find this work useful for your research, please cite:
+```
+@article{luan2018deep,
+  title={Deep Painterly Harmonization},
+  author={Luan, Fujun and Paris, Sylvain and Shechtman, Eli and Bala, Kavita},
+  journal={arXiv preprint arXiv:1804.03189},
+  year={2018}
+}
+```
 
 ## Contact
 Feel free to contact me if there is any question (Fujun Luan fl356@cornell.edu).
