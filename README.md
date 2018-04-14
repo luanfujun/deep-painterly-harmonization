@@ -77,11 +77,14 @@ Here are some results from our algorithm (from left to right are original painti
   <img src='data/6_naive.jpg' width='290'/>
   <img src='results/6_final_res2.png' width='290'/>
 </p>
+<!--
 <p align='center'>
   <img src='data/7_target.jpg' width='290'/>
   <img src='data/7_naive.jpg' width='290'/>
   <img src='results/7_final_res2.png' width='290'/>
 </p>
+-->
+
 <!--
 <p align='center'>
   <img src='data/8_target.jpg' width='290'/>
@@ -94,16 +97,21 @@ Here are some results from our algorithm (from left to right are original painti
   <img src='results/8_result_balloon.jpg' width='290'/>
 </p>
 -->
+
 <p align='center'>
   <img src='data/8_target.jpg' width='290'/>
   <img src='results/8_naive_aircraft.png' width='290'/>
   <img src='results/8_result_aircraft.png' width='290'/>
 </p>
+
+<!--
 <p align='center'>
   <img src='data/9_target.jpg' width='290'/>
   <img src='data/9_naive.jpg' width='290'/>
   <img src='results/9_final_res2.png' width='290'/>
 </p>
+-->
+
 <p align='center'>
   <img src='data/10_target.jpg' width='290'/>
   <img src='data/10_naive.jpg' width='290'/>
@@ -139,11 +147,16 @@ Here are some results from our algorithm (from left to right are original painti
   <img src='data/16_naive.jpg' width='290'/>
   <img src='results/16_final_res2.png' width='290'/>
 </p>
+
+<!--
 <p align='center'>
   <img src='data/17_target.jpg' width='290'/>
   <img src='data/17_naive.jpg' width='290'/>
   <img src='results/17_final_res2.png' width='290'/>
 </p>
+-->
+
+
 <p align='center'>
   <img src='data/17_target.jpg' width='290'/>
   <img src='results/17_naive_sherlock.jpg' width='290'/>
@@ -224,11 +237,15 @@ Here are some results from our algorithm (from left to right are original painti
   <img src='data/32_naive.jpg' width='290'/>
   <img src='results/32_final_res2.png' width='290'/>
 </p>
+
+<!--
 <p align='center'>
   <img src='data/33_target.jpg' width='290'/>
   <img src='data/33_naive.jpg' width='290'/>
   <img src='results/33_final_res2.png' width='290'/>
 </p>
+-->
+
 <p align='center'>
   <img src='data/34_target.jpg' width='290'/>
   <img src='data/34_naive.jpg' width='290'/>
