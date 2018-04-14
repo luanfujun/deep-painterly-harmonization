@@ -32,7 +32,7 @@ for j in range(1, numGpus+1):
 					   ' -cnnmrf_image  results/' + str(idx) + '_inter_res.jpg  '\
 					   ' -gpu ' + str(j-1) + ' -original_colors 0 -image_size 700 '\
 					   ' -index ' + str(idx) + ' -wikiart_fn data/wikiart_output.txt '\
-					   ' -output_image  results/' + str(idx) + '_final_res.png' \
+					   ' -output_image  results/' + str(idx) + '_final_res.jpg' \
 					   ' -print_iter 100 -save_iter 100 '\
 					   ' -num_iterations 1000 &&' 
 			cmd = cmd + part_cmd1 + part_cmd2
