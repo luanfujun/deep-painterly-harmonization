@@ -212,11 +212,16 @@ Here are some results from our algorithm (from left to right are original painti
   <img src='data/27_naive.jpg' width='290'/>
   <img src='results/27_final_res2.png' width='290'/>
 </p>
+
+<!--
 <p align='center'>
   <img src='data/28_target.jpg' width='290'/>
   <img src='data/28_naive.jpg' width='290'/>
   <img src='results/28_final_res2.png' width='290'/>
 </p>
+-->
+
+
 <p align='center'>
   <img src='data/29_target.jpg' width='290'/>
   <img src='data/29_naive.jpg' width='290'/>
