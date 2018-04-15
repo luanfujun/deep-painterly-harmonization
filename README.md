@@ -111,6 +111,11 @@ Here are some results from our algorithm (from left to right are original painti
   <img src='results/9_final_res2.png' width='290'/>
 </p>
 -->
+<p align='center'>
+  <img src='data/9_target.jpg' width='290'/>
+  <img src='results/9_naive_dragon.png' width='290'/>
+  <img src='results/9_result_dragon.jpg' width='290'/>
+</p>
 
 <p align='center'>
   <img src='data/10_target.jpg' width='290'/>
