@@ -255,6 +255,11 @@ Here are some results from our algorithm (from left to right are original painti
   <img src='results/33_final_res2.png' width='290'/>
 </p>
 -->
+<p align='center'>
+  <img src='data/33_target.jpg' width='290'/>
+  <img src='results/33_naive_buddha.png' width='290'/>
+  <img src='results/33_result_buddha.jpg' width='290'/>
+</p>
 
 <p align='center'>
   <img src='data/34_target.jpg' width='290'/>
