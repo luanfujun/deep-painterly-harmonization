@@ -1,42 +1,6 @@
-# deep-painterly-harmonization
-Code and data for paper "[Deep Painterly Harmonization](https://arxiv.org/abs/1804.03189)"  
 
 ## Disclaimer 
-**This software is published for academic and non-commercial use only.**
-
-## Setup
-This code is based on torch. It has been tested on Ubuntu 16.04 LTS.
-
-Dependencies:
-* [Torch](https://github.com/torch/torch7) (with [loadcaffe](https://github.com/szagoruyko/loadcaffe))
-* [Matlab](https://www.mathworks.com/) or [Octave](https://www.gnu.org/software/octave/)
-
-CUDA backend:
-* [CUDA](https://developer.nvidia.com/cuda-downloads)
-* [cudnn](https://developer.nvidia.com/cudnn)
-
-Download VGG-19:
-```
-sh models/download_models.sh
-```
-
-Compile ``cuda_utils.cu`` (Adjust ``PREFIX`` and ``NVCC_PREFIX`` in ``makefile`` for your machine):
-```
-make clean && make
-```
-
-## Usage
-To generate all results (in  ``data/``) using the provided scripts, simply run
-```
-python gen_all.py
-```
-in Python and then 
-```
-run('filt_cnn_artifact.m')
-```
-in Matlab or Octave. The final output will be in ``results/``.
-
-Note that in the paper we trained a CNN on a dataset of 80,000 paintings collected from [wikiart.org](https://www.wikiart.org), which estimates the stylization level of a given painting and adjust weights accordingly. We will release the pre-trained model in the next update. Users will need to set those weights manually if running on their new paintings for now. 
+**We don't own the copyright of some images below. Use with caution.**
 
 ## Examples
 Here are some results from our algorithm (from left to right are original painting, naive composite and our output):
