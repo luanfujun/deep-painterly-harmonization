@@ -256,22 +256,22 @@ Here are some results from our algorithm (from left to right are original painti
 </p>
 
 <p align='center'>
-  <img src='data/33_target.jpg' width='290'/>
-  <img src='data/33_naive.jpg' width='290'/>
-  <img src='results/33_final_res2.png' width='290'/>
-</p>
-
-
-<p align='center'>
   <img src='data/35_target.jpg' width='290'/>
   <img src='results/35_naive.jpg' width='290'/>
   <img src='results/35_result.png' width='290'/>
 </p>
 
+
 <p align='center'>
   <img src='data/33_target.jpg' width='290'/>
   <img src='results/33_naive_buddha.png' width='290'/>
   <img src='results/33_result_buddha.jpg' width='290'/>
+</p>
+
+<p align='center'>
+  <img src='data/33_target.jpg' width='290'/>
+  <img src='data/33_naive.jpg' width='290'/>
+  <img src='results/33_final_res2.png' width='290'/>
 </p>
 
 <p align='center'>
