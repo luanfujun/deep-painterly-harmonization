@@ -38,8 +38,9 @@ in Matlab or Octave. The final output will be in ``results/``.
 
 Note that in the paper we trained a CNN on a dataset of 80,000 paintings collected from [wikiart.org](https://www.wikiart.org), which estimates the stylization level of a given painting and adjust weights accordingly. We will release the pre-trained model in the next update. Users will need to set those weights manually if running on their new paintings for now. 
 
-## Examples (Removed a few images due to copyright issue)
-Here are some results from our algorithm (from left to right are original painting, naive composite and our output), [full set](https://github.com/luanfujun/deep-painterly-harmonization/blob/master/README2.md)):
+**Removed a few images due to copyright issue. Full set [here](https://github.com/luanfujun/deep-painterly-harmonization/blob/master/README2.md) for testing use only.**
+## Examples
+Here are some results from our algorithm (from left to right are original painting, naive composite and our output):
 
 <p align='center'>
   <img src='data/0_target.jpg' width='290'/>
