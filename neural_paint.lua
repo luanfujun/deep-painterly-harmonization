@@ -110,7 +110,7 @@ local function main(params)
   local feature_extractor = nn.Sequential()
   local input_features, target_features, match_features, match_masks = {}, {}, {}, {}
   local layerIdx = 1
-  for i = 1, #cnn do
+  for i = 1, cnn:size() do
     if layerIdx <= #layers then
       local layer = cnn:get(i)
       local name = layer.name
@@ -203,7 +203,7 @@ local function main(params)
   local tv_mod = nn.TVLoss(tv_weight, mask_image):float():cuda()
   net:add(tv_mod)
 
-  for i = 1, #cnn do
+  for i = 1, cnn:size() do
     if next_content_idx <= #content_layers or next_style_idx <= #style_layers or next_hist_idx <= #hist_layers then
       local layer = cnn:get(i)
       local name = layer.name
