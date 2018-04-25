@@ -97,7 +97,7 @@ local function main(params)
   -- load VGG-19 network
   local cnn = loadcaffe.load(params.proto_file, params.model_file, params.backend):float():cuda()
 
-  for i = 1, #cnn do
+  for i = 1, cnn:size() do
     if next_content_idx <= #content_layers or next_style_idx <= #style_layers then
       local layer = cnn:get(i)
       local name = layer.name
