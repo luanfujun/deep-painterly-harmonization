@@ -16,7 +16,7 @@ for j in range(1, numGpus+1):
 		idx = (i-1) * numGpus + (j-1)
 		if idx >= 0 and idx < numImgs:
 			print('Working on image idx = ', idx)
-			part_cmd1 =' th neural_gram.lua '\
+			part_cmd1 =' /content/torch/install/bin/th neural_gram.lua '\
 					   ' -content_image data/' + str(idx) + '_naive.jpg  '\
 					   ' -style_image   data/' + str(idx) + '_target.jpg '\
 					   ' -tmask_image   data/' + str(idx) + '_c_mask.jpg '\
@@ -24,7 +24,7 @@ for j in range(1, numGpus+1):
 					   ' -gpu ' + str(j-1) + ' -original_colors 0 -image_size 700 '\
 					   ' -output_image  results/' + str(idx) + '_inter_res.jpg'\
 					   ' -print_iter 100 -save_iter 100 && '
-			part_cmd2 =' th neural_paint.lua '\
+			part_cmd2 =' /content/torch/install/bin/th neural_paint.lua '\
 					   ' -content_image data/' + str(idx) + '_naive.jpg '\
 					   ' -style_image   data/' + str(idx) + '_target.jpg '\
 					   ' -tmask_image   data/' + str(idx) + '_c_mask.jpg '\
